@@ -15,8 +15,8 @@ class Y_dataset(object):  # y_data製造用class
     def make_data(self):  #input x:x_data(n-dim)// output y_data(np.array,n-dim
         dataplot = []
         for i in self.x:
-            tmp = 2 * i
-            tmp += 0.5 *i*np.random.randn()
+            tmp =  i - i**20
+            # tmp += 0.5 *i*np.random.randn()
             dataplot.append(tmp)
 
         dataplot = np.array(dataplot)
@@ -29,7 +29,7 @@ class Agent(object):
         self.x_data = x_data
 
         self.n = n
-        self.eta = 0.01
+        self.eta = 0.001
         self.phi = copy.copy(self.make_phi(x_data))
         self.phi_to = copy.copy(self.phi.T)
         self.phi_tophi = copy.copy(np.dot(self.phi_to,self.phi))
@@ -43,13 +43,16 @@ class Agent(object):
     def get_y_data(self,y_data):#input y_data(np.array,n-dim)
         self.y_data = y_data.T
 
-    def update(self):
-        self.x_i = copy.copy(self.x_i - self.eta * (np.dot(self.phi_tophi,self.x_i) - np.dot(self.phi_to,self.y_data)))
+    def update(self,k):
+        grad = np.dot(self.phi_tophi,self.x_i) - np.dot(self.phi_to,self.y_data)
+        l1_grad = 0.1 * np.sign(self.x_i)
+
+        self.x_i = copy.copy(self.x_i - self.step(k) * (grad+l1_grad))
         # self.x_i = self.projection0_to1(self.x_i)
         # self.x_i
         # print((np.dot(self.phi_tophi,self.x_i) - np.dot(self.phi_to,self.y_data)))
         # print(self.x_i)
-        print(np.linalg.norm(np.dot(self.phi_tophi,self.x_i) - np.dot(self.phi_to,self.y_data)))
+        # print(np.linalg.norm(np.dot(self.phi_tophi,self.x_i) - np.dot(self.phi_to,self.y_data)))
         # print(np.linalg.norm(self.x_opt-self.x_i))
 
 
@@ -81,18 +84,23 @@ class Agent(object):
         plt.plot(graph_x_tick_ydata ,self.y_data,'o')
         plt.show()
 
+    def step(self,k):
+        return 1.0/(0.001*k+100)
+
 
 if __name__ == '__main__':
-    x_data = np.array([0.1 * (i) for i in range(10)])
+    x_data = np.array([0.1 * (i) for i in range(11)])
     n = len(x_data)
+    n = 21
     agent = Agent(x_data,n)
     data = Y_dataset(x_data)
     agent.get_y_data(data.y_data)
 
-    agent.optimal()
-    for k in range(1000000):
-        agent.update()
+    # agent.optimal()
+    for k in range(10000000):
+        agent.update(k)
 
+    print(agent.x_i)
     # agent.optimal()
     agent.write_graph()
 
